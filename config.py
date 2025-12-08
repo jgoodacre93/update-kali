@@ -1,159 +1,56 @@
 import os
 import subprocess
+import yaml
 
-''' This file defines what the update-kali script should do. '''
+''' This file loads configuration from config.yaml '''
 
-# Determine release, and whether we are on Windows Subsystem for Linux (WSL) so that we can set
-# different settings for different environments. Anything common can go outside the if statements.
+def load_config():
+    """Load configuration from config.yaml based on the current OS and environment"""
+    
+    # Determine release, and whether we are on Windows Subsystem for Linux (WSL)
+    release = subprocess.check_output("""sh -c '. /etc/os-release; echo "$NAME"'""", shell=True,
+        universal_newlines=True).strip()
+    are_we_on_wsl = os.path.exists("/mnt/c/Windows/System32/wsl.exe")
+    
+    # Load the YAML configuration file
+    config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.yaml')
+    
+    try:
+        with open(config_path, 'r') as config_file:
+            all_configs = yaml.safe_load(config_file)
+    except FileNotFoundError:
+        raise Exception(f"Configuration file not found: {config_path}")
+    except yaml.YAMLError as e:
+        raise Exception(f"Error parsing YAML configuration file: {e}")
+    
+    # Determine which configuration to use
+    if 'Kali' in release:
+        config = all_configs['Kali']
+    elif 'Ubuntu' in release and are_we_on_wsl:
+        config = all_configs['Ubuntu-WSL']
+    elif 'Ubuntu' in release:
+        config = all_configs['Ubuntu']
+    else:
+        raise Exception(f"Unsupported OS: {release}. Supported OS types are: Kali, Ubuntu")
+    
+    # Set personal_repo_directory to $HOME if it's null
+    if config['personal_repo_directory'] is None:
+        config['personal_repo_directory'] = os.getenv("HOME")
+    
+    return config
 
-release = subprocess.check_output("""sh -c '. /etc/os-release; echo "$NAME"'""", shell=True,
-    universal_newlines=True).strip()
-are_we_on_wsl = os.path.exists("/mnt/c/Windows/System32/wsl.exe")
+# Load the configuration
+_config = load_config()
 
-
-if 'Kali' in release:
-    # These directories will be removed from your home directory
-    directories_to_remove = ['Documents', 'Music', 'Pictures', 'Public', 'Templates', 'Videos']
-
-    # These kali packages will be installed
-    packages_to_install = ['most', 'ttf-mscorefonts-installer', 'pydf', 'htop', 'gobuster', 'amass',
-                           'golang', 'exif', 'hexedit', 'jq', 'python3-pip', 'python3-venv',
-                           'apt-transport-https', 'curl', 'filezilla', 'meld', 'ncat', 'net-tools',
-                           'tmux', 'bash-completion', 'ieee-data', 'python3-netaddr',
-                           'ruby-full', 'powercat', 'cewl', 'nbtscan', 'tree', 'upx-ucl',
-                           'exe2hexbat', 'shellter', 'grc', 'tor', 'torbrowser-launcher']
-
-    # These kali packages will be removed
-    packages_to_remove = []
-
-    # These python packages will be installed globally
-    pip_packages = ['pipenv', 'pylint', 'dnsgen', 'stegcracker', 'truffleHog', 'apkleaks', 'defaultcreds-cheat-sheet']
-
-    # These gem packages will be installed globally
-    gem_packages = ['wpscan']
-
-    # These go tools will be installed globally. You will need to have the following settings in your
-    # .bashrc already:
-
-    # export GOROOT=/usr/lib/go
-    # export GOPATH=$HOME/go
-    # export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-    golang_install_directory = '/opt'
-    golang_modules_to_install = [
-                                'github.com/lc/gau',
-                                'github.com/hakluke/hakrawler',
-                                'github.com/hahwul/dalfox',
-                                'github.com/projectdiscovery/nuclei/v2/cmd/nuclei',
-                                'github.com/Shopify/kubeaudit',
-                                'github.com/tomnomnom/httprobe'
-                                ]
-
-    # These git repositories will be synced to the 'external repo' directory
-    external_tools_directory = '/opt'
-    ext_repositories_to_sync =  [
-                                'https://github.com/swisskyrepo/PayloadsAllTheThings',
-                                ]
-
-    # These git repositories will be synced to the 'personal repo' directory. I use my home directory.
-    personal_repo_directory = os.getenv("HOME")
-    personal_repositories_to_sync = [
-                                    'git@github.com:rafaelh/dotfiles',
-                                    'git@github.com:rafaelh/.private'
-                                    ]
-
-    # Next, take a look in the /scripts directory. Every script ending in .sh or .py will be run,
-    # provided it's # executable. For example, the current scripts install VS Code, Google Chrome and
-    # Typora. Any script that goes in this directory should be written so it can run multiple times
-    # without causing problems.
-
-if 'Ubuntu' in release and not are_we_on_wsl:
-    # These directories will be removed from your home directory
-    directories_to_remove = ['Documents', 'Music', 'Pictures', 'Public', 'Templates', 'Videos']
-
-    # These Ubuntu packages will be installed
-    packages_to_install = ['most', 'ttf-mscorefonts-installer', 'pydf', 'htop', 'golang', 'exif',
-                           'hexedit', 'jq', 'python3-pip', 'python3-venv', 'apt-transport-https',
-                           'curl', 'filezilla', 'meld', 'ncat', 'net-tools', 'tmux',
-                           'bash-completion', 'ruby-full', 'nbtscan', 'tree', 'grc', 'john']
-
-    # These Ubuntu packages will be removed
-    packages_to_remove = []
-
-    # These python packages will be installed globally
-    pip_packages = ['pipenv', 'pylint', 'stegcracker', 'truffleHog']
-
-    # These gem packages will be installed globally
-    gem_packages = ['wpscan']
-
-    # These go tools will be installed globally. You will need to have the following settings in your
-    # .bashrc already:
-    #
-    # export GOROOT=/usr/lib/go
-    # export GOPATH=$HOME/go
-    # export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-    golang_modules_to_install = [
-                                'github.com/lc/gau',
-                                'github.com/hakluke/hakrawler',
-                                'github.com/hahwul/dalfox',
-                                ]
-
-    # These git repositories will be synced to the 'external repo' directory
-    external_tools_directory = '/opt'
-    ext_repositories_to_sync =  [
-                                ]
-
-    # These git repositories will be synced to the 'personal repo' directory. I use my home directory.
-    personal_repo_directory = os.getenv("HOME")
-    personal_repositories_to_sync = [
-                                    'git@github.com:rafaelh/dotfiles',
-                                    'git@github.com:rafaelh/.private'
-                                    ]
-
-    # Next, take a look in the /scripts directory. Every script ending in .sh or .py will be run,
-    # provided it's # executable. For example, the current scripts install VS Code, Google Chrome and
-    # Typora. Any script that goes in this directory should be written so it can run multiple times
-    # without causing problems.
-
-if 'Ubuntu' in release and are_we_on_wsl:
-        # These directories will be removed from your home directory
-    directories_to_remove = []
-
-    # These Ubuntu packages will be installed
-    packages_to_install = ['most', 'pydf', 'golang', 'exif', 'hexedit', 'jq', 'python3-pip',
-                           'python3-venv', 'curl', 'net-tools', 'tmux', 'bash-completion',
-                           'ruby-full', 'nbtscan', 'tree', 'grc']
-
-    # These Ubuntu packages will be removed
-    packages_to_remove = []
-
-    # These python packages will be installed globally
-    pip_packages = ['pipenv', 'pylint']
-
-    # These gem packages will be installed globally
-    gem_packages = []
-
-    # These go tools will be installed globally. You will need to have the following settings in your
-    # .bashrc already:
-    #
-    # export GOROOT=/usr/lib/go
-    # export GOPATH=$HOME/go
-    # export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-    golang_modules_to_install = [
-                                ]
-
-    # These git repositories will be synced to the 'external repo' directory
-    external_tools_directory = '/opt'
-    ext_repositories_to_sync =  [
-                                ]
-
-    # These git repositories will be synced to the 'personal repo' directory. I use my home directory.
-    personal_repo_directory = os.getenv("HOME")
-    personal_repositories_to_sync = [
-                                    'git@github.com:rafaelh/dotfiles',
-                                    'git@github.com:rafaelh/.private'
-                                    ]
-
-    # Next, take a look in the /scripts directory. Every script ending in .sh or .py will be run,
-    # provided it's # executable. For example, the current scripts install VS Code, Google Chrome and
-    # Typora. Any script that goes in this directory should be written so it can run multiple times
-    # without causing problems.
+# Export configuration variables for backward compatibility
+directories_to_remove = _config['directories_to_remove']
+packages_to_install = _config['packages_to_install']
+packages_to_remove = _config['packages_to_remove']
+pip_packages = _config['pip_packages']
+gem_packages = _config['gem_packages']
+golang_install_directory = _config.get('golang_install_directory', '/opt')
+golang_modules_to_install = _config['golang_modules_to_install']
+external_tools_directory = _config['external_tools_directory']
+ext_repositories_to_sync = _config['ext_repositories_to_sync']
+personal_repo_directory = _config['personal_repo_directory']
+personal_repositories_to_sync = _config['personal_repositories_to_sync']

@@ -37,7 +37,7 @@ I need to keep a group of Kali linux boxes up to date, and I like them to be set
 * Fork the repo so that you can commit your changes to `config.yaml`, and so the script updates from your account fork in future
 * Update `config.yaml` with your preferences
 * Go through `/scripts/`, delete the ones you don't want, and add any of your own that you want to run.
-* Make sure you have the following installed: `python3`, `python-apt` and `git`. These are all installed by default on the standard kali. Additionally, install `python3-yaml` with `apt install python3-yaml` if not already present.
+* Make sure you have the following installed: `python3`, `python-apt` and `git`. These are all installed by default on the standard kali. Additionally, install PyYAML with `apt install python3-yaml` or `pip install PyYAML` if not already present.
 
 If you set up Kali VMs frequently, such as for different engagements, skip to the end of this document and consider using this script with [vagrant](https://www.vagrantup.com/).
 

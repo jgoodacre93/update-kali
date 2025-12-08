@@ -14,8 +14,14 @@ def load_config():
     
     # Load the YAML configuration file
     config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.yaml')
-    with open(config_path, 'r') as config_file:
-        all_configs = yaml.safe_load(config_file)
+    
+    try:
+        with open(config_path, 'r') as config_file:
+            all_configs = yaml.safe_load(config_file)
+    except FileNotFoundError:
+        raise Exception(f"Configuration file not found: {config_path}")
+    except yaml.YAMLError as e:
+        raise Exception(f"Error parsing YAML configuration file: {e}")
     
     # Determine which configuration to use
     if 'Kali' in release:
@@ -25,7 +31,7 @@ def load_config():
     elif 'Ubuntu' in release:
         config = all_configs['Ubuntu']
     else:
-        raise Exception(f"Unsupported OS: {release}")
+        raise Exception(f"Unsupported OS: {release}. Supported OS types are: Kali, Ubuntu")
     
     # Set personal_repo_directory to $HOME if it's null
     if config['personal_repo_directory'] is None:

@@ -34,15 +34,15 @@ optional arguments:
 ## About
 I need to keep a group of Kali linux boxes up to date, and I like them to be setup in a similar format. This script installs the tools I'm likely to use, creates directories, etc. It's set up for my personal use, but with a little modification you can use it too:
 
-* Fork the repo so that you can commit your changes to `config.py`, and so the script updates from your account fork in future
-* Update `config.py` with your preferences
+* Fork the repo so that you can commit your changes to `config.yaml`, and so the script updates from your account fork in future
+* Update `config.yaml` with your preferences
 * Go through `/scripts/`, delete the ones you don't want, and add any of your own that you want to run.
-* Make sure you have the following installed: `python3`, `python-apt` and `git`. These are all installed by default on the standard kali.
+* Make sure you have the following installed: `python3`, `python-apt`, `pyyaml` and `git`. These are all installed by default on the standard kali.
 
 If you set up Kali VMs frequently, such as for different engagements, skip to the end of this document and consider using this script with [vagrant](https://www.vagrantup.com/).
 
 ## Config
-The default config can be found in `config.py`. You should updated it to match what you want, otherwise you'll use my preferences and calamity will ensue. This script will:
+The default config can be found in `config.yaml`. You should update it to match what you want, otherwise you'll use my preferences and calamity will ensue. This script will:
 
 * Perform a general package update
 * Install and remove specified apt packages
@@ -96,8 +96,8 @@ fi
 Another way this script can be useful is in concern with [Vagrant](https://www.vagrantup.com/), which will allow you to create a fresh kali vm, configured as you want with a simple `vagrant up`. Fresh kali box for every engagement? No problem.
 
 1. Install [vagrant](https://www.vagrantup.com/)
-2. Fork the repo so that you can commit your changes to `config.py`, and so the script updates from your account fork in future
-3. Update `config.py` with your preferences
+2. Fork the repo so that you can commit your changes to `config.yaml`, and so the script updates from your account fork in future
+3. Update `config.yaml` with your preferences
 4. Go through `/scripts/`, delete the ones you don't want, and add any of your own that you want to run
 5. Confirm that there aren't any changes you want to make to the `Vagrantfile`
 6. Run `vagrant up`. Once the VM has finished provisioning and updating, you can ssh in using `vagrant ssh` or log in to Virtualbox/VMware with 'vagrant' as the username and password.
